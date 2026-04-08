@@ -66,6 +66,10 @@ export default {
           light: "hsl(var(--navy-light))",
         },
       },
+      fontFamily: {
+        sans: ['DM Sans', 'sans-serif'],
+        serif: ['DM Serif Display', 'serif'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
