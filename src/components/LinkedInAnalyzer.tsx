@@ -333,6 +333,7 @@ const LinkedInAnalyzer = () => {
   const [data, setData] = useState<ProfileData>(initialData);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   const update = <K extends keyof ProfileData>(k: K, v: ProfileData[K]) =>
     setData((d) => ({ ...d, [k]: v }));
@@ -342,8 +343,11 @@ const LinkedInAnalyzer = () => {
     if (!data.url.trim()) return;
     setIsAnalyzing(true);
     setResult(null);
+    setWarnings([]);
     await new Promise((r) => setTimeout(r, 1200));
-    setResult(analyzeProfile(data));
+    const { result: r, warnings: w } = analyzeProfile(data);
+    setResult(r);
+    setWarnings(w);
     setIsAnalyzing(false);
   };
 
