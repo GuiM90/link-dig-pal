@@ -520,6 +520,16 @@ const LinkedInAnalyzer = () => {
             transition={{ duration: 0.5 }}
             className="max-w-5xl mx-auto px-6 pb-20"
           >
+            {warnings.length > 0 && (
+              <div className="bg-card border border-accent/40 rounded-2xl p-5 mb-6">
+                <p className="text-sm font-medium text-accent mb-2">Ajustes na normalização</p>
+                <ul className="text-sm text-muted-foreground space-y-1 list-disc pl-5">
+                  {warnings.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="bg-card border border-border rounded-2xl p-8 mb-8">
               <div className="flex flex-col md:flex-row items-center gap-8">
                 <ProfileScoreRing score={result.overallScore} label="Score Geral" />
