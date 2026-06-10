@@ -302,14 +302,17 @@ function analyzeProfile(data: ProfileData): { result: AnalysisResult; warnings: 
     }));
 
   return {
-    overallScore: overall,
-    categories,
-    suggestions,
-    scores: [
-      { label: "Completude", score: completude },
-      { label: "Impacto", score: impacto },
-      { label: "Visibilidade", score: visibilidade },
-    ],
+    result: {
+      overallScore: overall,
+      categories,
+      suggestions,
+      scores: [
+        { label: "Completude", score: completude },
+        { label: "Impacto", score: impacto },
+        { label: "Visibilidade", score: visibilidade },
+      ],
+    },
+    warnings,
   };
 }
 
