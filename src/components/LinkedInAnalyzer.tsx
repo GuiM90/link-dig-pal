@@ -24,7 +24,7 @@ interface AnalysisResult {
 }
 
 const mockAnalysis: AnalysisResult = {
-  overallScore: 72,
+  overallScore: 58,
   categories: [
     { icon: User, title: "Foto de Perfil", value: "Presente", description: "Perfis com foto recebem 21x mais visualizações e 9x mais pedidos de conexão.", status: "good" },
     { icon: FileText, title: "Resumo / Sobre", value: "Curto", description: "Seu resumo tem menos de 200 caracteres. O ideal são 3-5 parágrafos com palavras-chave.", status: "warning" },
@@ -46,9 +46,9 @@ const mockAnalysis: AnalysisResult = {
     { text: "Experiências profissionais presentes — bom trabalho!", priority: "low" },
   ],
   scores: [
-    { label: "Completude", score: 68 },
-    { label: "Impacto", score: 55 },
-    { label: "Visibilidade", score: 78 },
+    { label: "Completude", score: 45 },
+    { label: "Impacto", score: 62 },
+    { label: "Visibilidade", score: 81 },
   ],
 };
 
