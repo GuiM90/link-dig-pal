@@ -43,14 +43,97 @@ const clamp = (n: number, min = 0, max = 100) => Math.max(min, Math.min(max, Mat
 const statusFromScore = (s: number): "good" | "warning" | "bad" =>
   s >= 75 ? "good" : s >= 45 ? "warning" : "bad";
 
-function analyzeProfile(data: ProfileData): AnalysisResult {
-  const headline = data.headline.trim();
-  const about = data.about.trim();
-  const experiencesList = data.experiences.split("\n").map((l) => l.trim()).filter(Boolean);
-  const educationList = data.education.split("\n").map((l) => l.trim()).filter(Boolean);
-  const skillsList = data.skills.split(",").map((s) => s.trim()).filter(Boolean);
-  const recs = parseInt(data.recommendations || "0", 10) || 0;
-  const customUrl = data.customUrl || /linkedin\.com\/in\/[a-z0-9-]{4,}\/?$/i.test(data.url);
+// ---- Normalização ----
+const cleanText = (s: string) =>
+  (s || "")
+    .replace(/\u00A0/g, " ")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
+const splitUnique = (raw: string, sep: RegExp | string, minLen = 2) => {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of (raw || "").split(sep)) {
+    const item = cleanText(part).replace(/^[•\-\*\d.\)\s]+/, "").trim();
+    if (item.length < minLen) continue;
+    const key = item.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+};
+
+const normalizeLinkedInUrl = (raw: string) => {
+  let url = (raw || "").trim().toLowerCase().replace(/\s+/g, "");
+  if (!url) return "";
+  url = url.replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/\/+$/, "");
+  return url ? `https://${url}` : "";
+};
+
+interface NormalizedProfile {
+  url: string;
+  headline: string;
+  about: string;
+  experiences: string[];
+  education: string[];
+  skills: string[];
+  recommendations: number;
+  hasPhoto: boolean;
+  hasBanner: boolean;
+  customUrl: boolean;
+}
+
+function normalizeProfile(data: ProfileData): { profile: NormalizedProfile; warnings: string[] } {
+  const warnings: string[] = [];
+
+  const url = normalizeLinkedInUrl(data.url);
+  if (url && !/linkedin\.com\/in\//i.test(url)) {
+    warnings.push("URL não parece ser de um perfil LinkedIn (esperado: linkedin.com/in/...).");
+  }
+
+  const headlineClean = cleanText(data.headline);
+  const headline = headlineClean.slice(0, 220);
+  if (headlineClean.length > 220) warnings.push("Headline truncado para 220 caracteres.");
+
+  const aboutClean = cleanText(data.about);
+  const about = aboutClean.slice(0, 2600);
+  if (aboutClean.length > 2600) warnings.push("Resumo truncado para 2600 caracteres.");
+
+  const expRawCount = (data.experiences || "").split(/\n+/).filter((l) => l.trim().length >= 4).length;
+  const experiences = splitUnique(data.experiences, /\n+/, 4);
+  if (expRawCount - experiences.length > 0)
+    warnings.push(`${expRawCount - experiences.length} experiência(s) duplicada(s) ignoradas.`);
+
+  const education = splitUnique(data.education, /\n+/, 3);
+
+  const skillsRawCount = (data.skills || "").split(/[,;\n]+/).filter((s) => s.trim().length >= 2).length;
+  const skills = splitUnique(data.skills, /[,;\n]+/, 2).slice(0, 50);
+  if (skillsRawCount - skills.length > 0)
+    warnings.push(`${skillsRawCount - skills.length} competência(s) duplicada(s) ignoradas.`);
+
+  const recsRaw = parseInt((data.recommendations || "0").replace(/[^\d-]/g, ""), 10);
+  const recommendations = Math.max(0, Math.min(99, isNaN(recsRaw) ? 0 : recsRaw));
+
+  const customUrl = data.customUrl || /linkedin\.com\/in\/[a-z0-9-]{4,}\/?$/i.test(url);
+
+  return {
+    profile: { url, headline, about, experiences, education, skills, recommendations, hasPhoto: !!data.hasPhoto, hasBanner: !!data.hasBanner, customUrl },
+    warnings,
+  };
+}
+
+function analyzeProfile(data: ProfileData): { result: AnalysisResult; warnings: string[] } {
+  const { profile, warnings } = normalizeProfile(data);
+  const headline = profile.headline;
+  const about = profile.about;
+  const experiencesList = profile.experiences;
+  const educationList = profile.education;
+  const skillsList = profile.skills;
+  const recs = profile.recommendations;
+  const customUrl = profile.customUrl;
 
   // ---- Per-category scores (0-100) ----
   const photoScore = data.hasPhoto ? 100 : 10;
